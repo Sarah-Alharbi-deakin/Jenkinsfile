@@ -1,0 +1,135 @@
+pipeline {
+    agent any
+    environment {
+        LOG_DIR = "${WORKSPACE}/logs"
+        EMAIL_RECIPIENT = 's224155072@deakin.edu.au'
+    }
+    stages {
+        stage('Setup') {
+            steps {
+                script {
+                    sh "mkdir -p ${LOG_DIR}"
+                    echo 'Initial setup completed.'
+                }
+            }
+        }
+
+        stage('Build') {
+            steps {
+                script {
+                    echo 'Compiling project using Maven.'
+                    sh "echo 'Maven build process simulated.' > ${LOG_DIR}/build.log"
+                }
+            }
+        }
+
+        stage('Unit and Integration Tests') {
+            steps {
+                script {
+                    echo 'Executing unit and integration tests with JUnit.'
+                    sh "echo 'Simulated JUnit test results.' > ${LOG_DIR}/test.log"
+                }
+            }
+        }
+
+        stage('Code Analysis') {
+            steps {
+                script {
+                    echo 'Performing static code analysis using SonarQube.'
+                    sh "echo 'SonarQube scan simulated.' > ${LOG_DIR}/code_analysis.log"
+                }
+            }
+        }
+
+        stage('Security Scan') {
+            steps {
+                script {
+                    echo 'Running security scan with OWASP ZAP.'
+                    sh "echo 'OWASP ZAP scan simulated.' > ${LOG_DIR}/security_scan.log"
+                }
+            }
+        }
+
+        stage('Deploy to Staging') {
+            steps {
+                script {
+                    echo 'Deploying build to staging environment (AWS EC2).'
+                    sh "echo 'Staging deployment simulated.' > ${LOG_DIR}/staging_deployment.log"
+                }
+            }
+        }
+
+        stage('Integration Tests on Staging') {
+            steps {
+                script {
+                    echo 'Validating application in staging environment.'
+                    sh "echo 'Integration tests on staging simulated.' > ${LOG_DIR}/staging_tests.log"
+                }
+            }
+        }
+
+        stage('Deploy to Production') {
+            steps {
+                script {
+                    echo 'Deploying to production environment (AWS EC2).'
+                    sh "echo 'Production deployment simulated.' > ${LOG_DIR}/production_deployment.log"
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            archiveArtifacts artifacts: 'logs/*'
+        }
+        success {
+            script {
+                sendEmail(LOG_DIR, "Pipeline completed successfully.")
+            }
+        }
+        failure {
+            script {
+                sendEmail(LOG_DIR, "Pipeline failed. Review the logs for more details.")
+            }
+        }
+    }
+}
+
+def sendEmail(String logDir, String emailBody) {
+    def buildLogs = sh(script: "cat ${logDir}/build.log", returnStdout: true).trim()
+    def testLogs = sh(script: "cat ${logDir}/test.log", returnStdout: true).trim()
+    def securityLogs = sh(script: "cat ${logDir}/security_scan.log", returnStdout: true).trim()
+    def codeAnalysisLogs = sh(script: "cat ${logDir}/code_analysis.log", returnStdout: true).trim()
+    def stagingDeploymentLogs = sh(script: "cat ${logDir}/staging_deployment.log", returnStdout: true).trim()
+    def stagingTestsLogs = sh(script: "cat ${logDir}/staging_tests.log", returnStdout: true).trim()
+    def productionDeploymentLogs = sh(script: "cat ${logDir}/production_deployment.log", returnStdout: true).trim()
+
+    mail to: EMAIL_RECIPIENT,
+         subject: "Jenkins Pipeline Result: ${currentBuild.currentResult}",
+         body: """\
+${emailBody}
+
+=== Logs Summary ===
+
+Build:
+${buildLogs}
+
+Tests:
+${testLogs}
+
+Security Scan:
+${securityLogs}
+
+Code Analysis:
+${codeAnalysisLogs}
+
+Staging Deployment:
+${stagingDeploymentLogs}
+
+Staging Tests:
+${stagingTestsLogs}
+
+Production Deployment:
+${productionDeploymentLogs}
+"""
+}
