@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         LOG_DIR = "${WORKSPACE}/logs"
-        EMAIL_RECIPIENT = 's224155072@deakin.edu.au'
+        EMAIL_RECIPIENT = 'samau064@gmail.com'
     }
     stages {
         stage('Setup') {
